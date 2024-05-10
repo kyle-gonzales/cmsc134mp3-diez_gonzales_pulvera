@@ -136,7 +136,7 @@ We attempt to inject the following JavaScript into the website via the post inpu
 </script>
 ```
 
-After submitting the request, we're redirected to the home route, where all user posts are rendered in HTML. The malicious post is also parsed as an actual `<script>` tag. The JavaScript within the `<script>` tag executes immediately when the webpage loads, confirming the success of the XSS attack, as shown below:
+After submitting the request, we're redirected to the `/home` route, where all user posts are rendered in HTML. The malicious post is also parsed as an actual `<script>` tag. The JavaScript within the `<script>` tag executes immediately when the webpage loads, confirming the success of the XSS attack, as shown below:
 
 ![alt text](./assets/image2.png)
 
@@ -275,7 +275,7 @@ The XSS and CSRF attacks we've discussed here are relatively straightforward and
 
 As we've discussed, attackers can get very creative when identifying potential vulnerabilities within an application.
 
-Consider a scenario where, prior to the implementation of input sanitization on the webpage, an attacker managed to inject malicious code into your database via a stored XSS/CSRF attack. Without input sanitization, the website becomes susceptible to the types of attacks we've previously discussed.
+Surprise Attack!!! Consider a scenario where, prior to the implementation of input sanitization on the webpage, an attacker managed to inject malicious code into your database via a stored XSS/CSRF attack. When these posts are loaded, the CSRF and XSS attacks discussed earlier are successfully launched.
 
 ![alt text](./assets/image11.png)
 
@@ -320,7 +320,7 @@ Now consider the defamatory, career-ending post stored in the database:
 </script>
 ```
 
-Upon fetching the posts from the database, the post is rendered on the webpage as an actual HTML form, and the client;s browser automatically attempts to submit the request. However, even without server-side input sanitization, the server rejects the request from our malicious form due to the absence of a valid CSRF token:
+Upon fetching the posts from the database, the post is rendered on the webpage as an actual HTML form, and the client's browser automatically attempts to submit the request. However, even without server-side input sanitization, the server rejects the request from our malicious form due to the absence of a valid CSRF token:
 
 ![alt text](./assets/image13.png)
 
@@ -331,13 +331,13 @@ When we check the server logs, we can we observe a 400 response code (Bad Reques
 127.0.0.1 - - [10/May/2024 20:27:39] "POST /posts HTTP/1.1" 400 -
 ```
 
-Note that while the post containing malicious code for an XSS attack may still execute (due to the absence of server-side input sanitization), we successfully defend against the CSRF attack. This highlights the importance of implementing multiple layers of defense through a defense-in-depth strategy.
+Although the post containing malicious code for an XSS attack may still execute (due to the absence of server-side input sanitization), we've successfully defended against the CSRF attack. This highlights the importance of implementing multiple layers of defense through a defense-in-depth strategy.
 
 ### Conclusion
 
 In our exploration as penetration testers, we've unveiled critical vulnerabilities within the web application, exposing it to SQL injection, XSS, and CSRF attacks. Through our hands-on exploration and deliberate attempts to break the system, we unearthed critical vulnerabilities that could compromise the integrity and confidentiality of the application.
 
-Addressing these vulnerabilities required a multifaceted approach. Utilizing parameterized SQL queries, we fortified the application against SQL injection, ensuring that user input is safeguarded from malicious manipulation. Additionally, by sanitizing user inputs and escaping HTML characters, we mitigated the risk of XSS and CSRF attacks. Furthermore, CSRF tokens adds another layer of defense against CSRF attacks, enhancing the resilience of the system against exploitation.
+Addressing these vulnerabilities required a multifaceted approach. With parameterized SQL queries, we fortified the application against SQL injection, ensuring that user input is safeguarded from malicious manipulation. Additionally, by sanitizing user inputs and escaping HTML characters, we mitigated the risk of XSS and CSRF attacks. Furthermore, CSRF tokens added another layer of defense against CSRF attacks, enhancing the resilience of the system against exploitation.
 
 One of our key learnings is the undeniable truth that breaking things is the most effective way to uncover vulnerabilities. By simulating attacks and exploiting weaknesses, we gained profound insights into the system's security posture, enabling us to identify and address potential risks.
 
