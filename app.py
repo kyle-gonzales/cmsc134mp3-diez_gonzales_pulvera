@@ -2,16 +2,25 @@ import secrets
 import sqlite3
 
 from flask import Flask, redirect, render_template, request
+from flask_wtf import CSRFProtect
 
 app = Flask(__name__)
 con = sqlite3.connect("app.db", check_same_thread=False)
 app.secret_key = "a really secret key"
+csrf = CSRFProtect(app)
 
 
 def clean_input(text):
     if not isinstance(text, str):
         return text
     return text.replace("<", "&lt;").replace(">", "&gt;")
+
+
+def clean_list_of_posts(posts):
+    clean_posts = []
+    for post in posts:
+        clean_posts.append((clean_input(str(post[0])),))
+    return clean_posts
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -69,6 +78,7 @@ def home():
                 "SELECT message FROM posts WHERE user = ?;", (str(user[0]),)
             )
             posts = res.fetchall()
+            # posts = clean_list_of_posts(posts)
             return render_template("home.html", username=user[1], posts=posts)
 
     return redirect("/login")
