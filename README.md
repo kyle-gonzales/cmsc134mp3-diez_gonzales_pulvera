@@ -130,8 +130,10 @@ After the successful SQL injection attack, we now have access to the user's post
 
 We attempt to inject the following JavaScript into the website via the post input:
 
-```
-<script>alert("this is an XSS attack!!!");</script>
+```html
+<script>
+  alert("this is an XSS attack!!!");
+</script>
 ```
 
 After submitting the request, we're redirected to the home route, where all user posts are rendered in HTML. The malicious post is also parsed as an actual `<script>` tag. The JavaScript within the `<script>` tag executes immediately when the webpage loads, confirming the success of the XSS attack, as shown below:
@@ -239,7 +241,7 @@ The input parameters are no longer mistaken as part of the SQL query. Because th
 
 The attacks we've encountered highlight the risks associated with injecting HTML into webpages, leaving them susceptible to XSS and CSRF attacks. Just as we guard against user input being mistaken for SQL code, we also aim to prevent it from being misinterpreted as malicious HTML code.
 
-On the client-side, one way to prevent such XSS attacks and CSRF attacks is to sanitize user inputs by escaping HTML characters using their respective encodings.
+One way to prevent such XSS attacks and CSRF attacks is to sanitize user inputs from incoming requests by escaping HTML characters using their respective encodings.
 
 ```python
 def clean_input(text):
@@ -269,11 +271,73 @@ Similarly, when attempting the CSRF attack described earlier, the post is no lon
 
 The XSS and CSRF attacks we've discussed here are relatively straightforward and the fix that we introduced in this discussion is a good place to start. Additionally, more comprehensive form validation logic can be implemented to add additional layers of protection - and, we ought to rely on existing libraries for this. However, preventing more serious XSS attacks on the client-side is challenging, as attackers have numerous creative methods to bypass defenses and exploit vulnerable users. Thus, adopting a defense-in-depth approach and implementing additional client-side and server-side defenses are crucial steps in mitigating such attacks effectively.
 
+### CSRF Tokens
+
+As we've discussed, attackers can get very creative when identifying potential vulnerabilities within an application.
+
+Consider a scenario where, prior to the implementation of input sanitization on the webpage, an attacker managed to inject malicious code into your database via a stored XSS/CSRF attack. Without input sanitization, the website becomes susceptible to the types of attacks we've previously discussed.
+
+![alt text](./assets/image11.png)
+
+Of course, one approach to mitigating this vulnerability is to implement server-side sanitization, where posts retrieved from the database undergo sanitization, replacing HTML symbols with their respective encodings.
+
+```python
+def clean_input(text):
+    if not isinstance(text, str):
+    return text
+  return text.replace("<", "&lt;").replace(">", "&gt;")
+
+def clean_list_of_posts(posts):
+  clean_posts = []
+  for post in posts:
+    clean_posts.append((clean_input(str(post[0])),))
+  return clean_posts
+
+@app.route("/posts")
+def posts():
+  ...
+  posts = res.fetchall()
+  posts = clean_list_of_posts(posts)
+  return render_template("home.html", username=user[1], posts=posts)
+```
+
+While this solution works, a more effective way to defend against CSRF attacks is to use CSRF Tokens.
+
+CSRF Tokens are hidden inputs containing tokens that essentially validate a form as authentic within the webpage. If the token is missing or invalid, the server rejects the form's request. This validation occurs through a mapping of CSRF tokens to session tokens maintained by the server.
+
+Luckily, Flask already has an API to implement CSRF tokens in our webpage. After integrating it into our application, we can inspect the webpage and see the CSRF token in the forms:
+
+![alt text](./assets/image12.png)
+
+Now consider the defamatory, career-ending post stored in the database:
+
+```html
+<form method="post" action="/posts" name="evilform">
+  <input type="text" name="message" value="I hate Chinese people" />
+</form>
+<script>
+  document.evilform.submit();
+</script>
+```
+
+Upon fetching the posts from the database, the post is rendered on the webpage as an actual HTML form, and the client;s browser automatically attempts to submit the request. However, even without server-side input sanitization, the server rejects the request from our malicious form due to the absence of a valid CSRF token:
+
+![alt text](./assets/image13.png)
+
+When we check the server logs, we can we observe a 400 response code (Bad Request):
+
+```
+127.0.0.1 - - [10/May/2024 20:27:29] "GET /home HTTP/1.1" 200 -
+127.0.0.1 - - [10/May/2024 20:27:39] "POST /posts HTTP/1.1" 400 -
+```
+
+Note that while the post containing malicious code for an XSS attack may still execute (due to the absence of server-side input sanitization), we successfully defend against the CSRF attack. This highlights the importance of implementing multiple layers of defense through a defense-in-depth strategy.
+
 ### Conclusion
 
 In our exploration as penetration testers, we've unveiled critical vulnerabilities within the web application, exposing it to SQL injection, XSS, and CSRF attacks. Through our hands-on exploration and deliberate attempts to break the system, we unearthed critical vulnerabilities that could compromise the integrity and confidentiality of the application.
 
-Addressing these vulnerabilities required a multifaceted approach. Utilizing parameterized SQL queries, we fortified the application against SQL injection, ensuring that user input is safeguarded from malicious manipulation. Additionally, by sanitizing user inputs and escaping HTML characters, we mitigated the risk of XSS and CSRF attacks, enhancing the resilience of the system against exploitation.
+Addressing these vulnerabilities required a multifaceted approach. Utilizing parameterized SQL queries, we fortified the application against SQL injection, ensuring that user input is safeguarded from malicious manipulation. Additionally, by sanitizing user inputs and escaping HTML characters, we mitigated the risk of XSS and CSRF attacks. Furthermore, CSRF tokens adds another layer of defense against CSRF attacks, enhancing the resilience of the system against exploitation.
 
 One of our key learnings is the undeniable truth that breaking things is the most effective way to uncover vulnerabilities. By simulating attacks and exploiting weaknesses, we gained profound insights into the system's security posture, enabling us to identify and address potential risks.
 
