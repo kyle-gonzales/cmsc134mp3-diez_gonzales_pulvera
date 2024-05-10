@@ -65,6 +65,8 @@ The database should have a single user preloaded: `alice` with password `1234567
 
 ---
 
+## Writeup
+
 In this Machine Problem, we are penetration testers. We aim to assess the security of this web application by simulating attacks to identify vulnerabilities and weaknesses. Then, after we gain insights from the attacks, we are able to provide solutions to secure the web application from real malicious actors.
 
 ### Attack
