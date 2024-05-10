@@ -53,9 +53,7 @@ The database contains three tables: `users`, `sessions`, and `posts`.
 
 The attacks we've encountered highlight the risks associated with injecting HTML into webpages, leaving them susceptible to XSS and CSRF attacks.
 
-To safeguard webpages against these vulnerabilities, one effective measure is to sanitize user inputs by escaping HTML characters using their respective encodings.
-
-When we retry the XSS attack described earlier, the input is no longer interpreted as an HTML element. Instead, it's treated as a regular string, as evident from the visible post below:The `users` table contains `username`s and `password`s.
+The `users` table contains `username`s and `password`s.
 
 `sessions` contains a mapping between `users` and a generated session token.
 
